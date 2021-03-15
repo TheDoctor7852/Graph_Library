@@ -1,0 +1,35 @@
+#include "graph.hpp"
+#include <primesieve.hpp>
+
+#include <future>
+#include "thread_pool.hpp"
+#include <random>
+
+#ifndef GRAPH_REL_ITER_HPP
+#define GRAPH_REL_ITER_HPP
+
+class Graph_Rel_Iterator{
+    std::vector<std::unique_ptr<Relationship>>::iterator begin;
+    std::vector<std::unique_ptr<Relationship>>::iterator end;
+    std::vector<size_t> thread_limits;
+    std::vector<u_int64_t> prime_numbers;
+
+    public:
+        Graph_Rel_Iterator(std::vector<std::unique_ptr<Relationship>>::iterator begin_input, std::vector<std::unique_ptr<Relationship>>::iterator end_input, size_t thread_count = std::thread::hardware_concurrency());
+
+        std::vector<std::unique_ptr<Relationship>>::iterator get_begin();
+
+        std::vector<std::unique_ptr<Relationship>>::iterator get_end();
+
+        const std::vector<size_t>& get_thread_limits();
+
+        const std::vector<u_int64_t>& get_prime_numbers();
+};
+
+using FunctionTypeRel = std::function<void(Relationship*)>;
+
+void for_each(Graph_Rel_Iterator g_it, FunctionTypeRel f);
+
+void for_each_random(Graph_Rel_Iterator g_it, FunctionTypeRel f);
+
+#endif
