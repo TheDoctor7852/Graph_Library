@@ -74,10 +74,47 @@ void init_rel_with_function(graph_db_ptr& graph, Graph& g){
     });
 }
 
+void init_rel_serial(graph_db_ptr& graph, Graph& g){
+
+    std::string property = "values";
+    double default_value = 1.0;
+
+    auto it_begin = g.get_node_iterator_begin();
+
+    graph->begin_transaction();
+
+   for(auto start = g.get_node_iterator_begin(); start != g.get_node_iterator_end(); start++){
+        std::vector<RelationshipWeight> from_node = {};
+        std::vector<node::id_t> ret = {};
+                    node::id_t active_node = (*start)->get_id();
+                    graph->foreach_from_relationship_of_node(graph->node_by_id(active_node), [&] (relationship& r) {
+                        if(graph->get_rship_description(r.id()).has_property(property)){
+                            from_node.push_back(RelationshipWeight(r.to_node_id(),convertBoostAnyToDouble(graph->get_rship_description(r.id()).properties.at(property))));
+                        } else{
+                            // sollte die Kante nicht die Property haben, wird der übergebene default_value verwendet 
+                            from_node.push_back(RelationshipWeight(r.to_node_id(),default_value)); 
+                        }
+                     });
+        
+                    ret = determin_max_values_ids(from_node);
+                    for(size_t i= 0; i<ret.size(); i++){
+                        g.add_relationship(start, it_begin + ret[i]);
+                    }
+    }
+
+    graph->commit_transaction();
+}
+
 void init_labels(Graph& g){
     for_each(Graph_Node_Iterator(g.get_node_iterator_begin(), g.get_node_iterator_end()), [](Node* n){
         n->add_property("label", n->get_id());
     });
+}
+
+void init_labels_serial(Graph& g){
+    for(auto it = g.get_node_iterator_begin(); it != g.get_node_iterator_end(); it++){
+        (*it)->add_property("label", (*it)->get_id());
+    }
 }
 
 void label_prop(Graph& g){
@@ -171,7 +208,9 @@ void label_prop_serial(Graph& g){
 int main(){
     Graph g;
 
-    auto pool = graph_pool::open("../../Poseidon_GraphAnalytics/test/graph/20000nodeGraph");
+    std::string path_Graphs = "../../../C++_Programme/Poseidon_GraphAnalytics/test/graph/";
+
+    auto pool = graph_pool::open(path_Graphs + "20000nodeGraph");
     auto graph = pool->open_graph("20000nodeGraph");
 
     auto start_init = std::chrono::high_resolution_clock::now();
