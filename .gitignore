@@ -1,3 +1,4 @@
 library_classes/build/libgraph_components.so
 *.vscode
 example/example
+example/PageRank
