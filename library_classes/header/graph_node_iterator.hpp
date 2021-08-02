@@ -49,4 +49,9 @@ void for_each(Graph_Node_Iterator g_it, FunctionTypeNode f);
 */
 void for_each_random(Graph_Node_Iterator g_it, FunctionTypeNode f);
 
+
+void for_each_time(Graph_Node_Iterator g_it, FunctionTypeNode f);
+
+void for_each_random_time(Graph_Node_Iterator g_it, FunctionTypeNode f);
+
 #endif
