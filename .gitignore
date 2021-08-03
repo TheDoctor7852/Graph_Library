@@ -2,3 +2,5 @@ library_classes/build/libgraph_components.so
 *.vscode
 example/example
 example/PageRank
+example/example_timed
+example/example_workstealing

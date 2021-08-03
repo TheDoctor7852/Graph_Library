@@ -14,6 +14,18 @@ example: $(OBJDIR)/example.o
 $(OBJDIR)/example.o: $(SRCDIR)/example.cpp
 	g++ -g $(CXX_FLAGS) $(CXX_DEFINES) $(INC) -I../library_classes/header  -o $@ -c $^
 
+example_timed: $(OBJDIR)/example_timed.o
+	g++ -g $(CXX_FLAGS) $^ -o $@ $(LINKER_COMMANDS) -Wl,-rpath,../library_classes/build -L../library_classes/build -lgraph_components -lprimesieve
+
+$(OBJDIR)/example_timed.o: $(SRCDIR)/example_timed.cpp
+	g++ -g $(CXX_FLAGS) $(CXX_DEFINES) $(INC) -I../library_classes/header  -o $@ -c $^
+
+example_workstealing: $(OBJDIR)/example_workstealing.o
+	g++ -g $(CXX_FLAGS) $^ -o $@ $(LINKER_COMMANDS) -Wl,-rpath,../library_classes/build -L../library_classes/build -lgraph_components -lprimesieve
+
+$(OBJDIR)/example_workstealing.o: $(SRCDIR)/example_workstealing.cpp
+	g++ -g $(CXX_FLAGS) $(CXX_DEFINES) $(INC) -I../library_classes/header -I/home/jan/Dokumente/Bachelorarbeit/Parallel_Librarys/work-stealing-queue -o $@ -c $^
+
 PageRank: $(OBJDIR)/pageRank.o
 	g++ -g $(CXX_FLAGS) $^ -o $@ $(LINKER_COMMANDS) -Wl,-rpath,../library_classes/build -L../library_classes/build -lgraph_components -lprimesieve
 

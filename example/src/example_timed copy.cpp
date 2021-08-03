@@ -1,5 +1,23 @@
 #include "graph.hpp"
-#include "graph_node_iterator.hpp"
+#include "graph_node_iterator_timed.hpp"
+
+
+void find_bigest_startdiff(Graph_Node_Iterator_Timed& iter, size_t pos){
+    size_t latest_pos = 0;
+    size_t earlyest_pos = 0;
+    auto latest = iter.get_times_vec()[pos][0].first;
+    auto earlyest = iter.get_times_vec()[pos][0].first;
+    for(size_t i=1; i<iter.get_times_vec()[pos].size()-1; i++){
+        if(latest < iter.get_times_vec()[pos][i].first){
+            latest = iter.get_times_vec()[pos][i].first;
+            latest_pos = i;
+        }else if(earlyest > iter.get_times_vec()[pos][i].first){
+            earlyest = iter.get_times_vec()[pos][i].first;
+            earlyest_pos = i;
+        }
+    }
+    std::cout << "Frühster Prozess war Nummer " << earlyest_pos << " und der späteste Start war Process: " << latest_pos << " mit einer Differenz von: " << std::chrono::duration_cast<std::chrono::microseconds>(latest - earlyest).count() << "microseconds." << std::endl;
+}
 
 struct RelationshipWeight{
     relationship::id_t id;
@@ -106,7 +124,8 @@ void init_rel_serial(graph_db_ptr& graph, Graph& g){
 }
 
 void init_labels(Graph& g){
-    for_each(Graph_Node_Iterator(g.get_node_iterator_begin(), g.get_node_iterator_end()), [](Node* n){
+    Graph_Node_Iterator_Timed iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
+    for_each_time(iter, [](Node* n){
         n->add_property("label", n->get_id());
     });
 }
@@ -119,7 +138,7 @@ void init_labels_serial(Graph& g){
 
 void label_prop(Graph& g){
 
-    Graph_Node_Iterator iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
+    Graph_Node_Iterator_Timed iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
     bool did_change = true;
     size_t turns = 0;
     size_t max_turns = 4000;
@@ -129,7 +148,7 @@ void label_prop(Graph& g){
 
     while(did_change && turns < max_turns){
         did_change = false;
-        for_each_random(iter, [&did_change, &rng](Node* n){
+        for_each_random_time(iter, [&did_change, &rng](Node* n){
             if(n->get_outgoing_rel().size() > 1){
                 std::uniform_int_distribution<int> distrib(0,n->get_outgoing_rel().size()-1);
                 size_t pos = distrib(rng);
@@ -151,11 +170,24 @@ void label_prop(Graph& g){
         turns++;
     }
     std::cout << "Turns taken: " << turns << std::endl;
+    std::cout << iter.get_times_vec().size() << std::endl;
+    for (size_t i=0; i<iter.get_times_vec().size(); i++){
+        for(size_t s=0; s<iter.get_times_vec()[i].size()-1; s++){
+            std::cout << "Process " << s << " started: " << std::chrono::time_point_cast<std::chrono::microseconds>(iter.get_times_vec()[i][s].first).time_since_epoch().count() << "  ";
+            std::cout << "Process " << s << " ended: " << std::chrono::time_point_cast<std::chrono::microseconds>(iter.get_times_vec()[i][s].second).time_since_epoch().count();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(iter.get_times_vec()[i][s].second - iter.get_times_vec()[i][s].first); 
+            std::cout << "Time taken by Process "  << s << ": "<< duration.count() << " microseconds" << std::endl;
+        }
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(iter.get_times_vec()[i][iter.get_times_vec()[i].size()-1].second - iter.get_times_vec()[i][iter.get_times_vec()[i].size()-1].first); 
+        std::cout << "Time taken by waiting to finsish: "  <<  duration.count() << " microseconds" << std::endl;
+        find_bigest_startdiff(iter, i);
+        std::cout << "--------------------------------------------------------------------------------------------------------------------" << std::endl;
+    }
 }
 
 void label_prop_serial(Graph& g){
 
-    Graph_Node_Iterator iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
+    Graph_Node_Iterator_Timed iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
     bool did_change = true;
     size_t turns = 0;
     size_t max_turns = 4000;
@@ -227,7 +259,6 @@ int main(){
     auto start_rel = std::chrono::high_resolution_clock::now();
 
     init_rel_with_function(graph, g);
-    //init_rel_serial(graph,g);
 
     auto stop_rel = std::chrono::high_resolution_clock::now();
 
@@ -239,7 +270,6 @@ int main(){
     auto start_init_label= std::chrono::high_resolution_clock::now();
 
     init_labels(g);
-    //init_labels_serial(g);
 
     auto stop_init_label = std::chrono::high_resolution_clock::now();
 
@@ -260,7 +290,7 @@ int main(){
     std::cout << "Time taken by label_prop: " 
       << duration_label_prop.count() << " microseconds" << std::endl;
 
-    graph->begin_transaction();
+    //graph->begin_transaction();
     
     /*
     for(auto it=g.get_node_iterator_begin(); it != g.get_node_iterator_end();it++){
@@ -283,5 +313,5 @@ int main(){
         std::cout << graph->get_node_description((*it)->get_from_node()->get_id()).properties.at("name") << "  nach: " << graph->get_node_description((*it)->get_to_node()->get_id()).properties.at("name") << std::endl;
     }*/
 
-    graph->commit_transaction();
+    //graph->commit_transaction();
 }

@@ -72,11 +72,11 @@ void init_ranks(Graph& g){
     Graph_Node_Iterator iter_node(g.get_node_iterator_begin(), g.get_node_iterator_end());
     Graph_Rel_Iterator iter_rel(g.get_rel_iterator_begin(), g.get_rel_iterator_end());
 
-    for_each(iter_rel,[](Relationship* rel){
+    for_each_time(iter_rel,[](Relationship* rel){
         rel->add_property("rank", 0.0);
     });
 
-    for_each(iter_node, [](Node* n){
+    for_each_time(iter_node, [](Node* n){
         n->add_property("rank", 1.0);    
     });
 }
@@ -93,14 +93,14 @@ void pageRank(Graph& g){
 
     while(!is_smaller && turns < max_turns){
         is_smaller = true;
-        for_each(iter_rel,[](Relationship* rel){
+        for_each_time(iter_rel,[](Relationship* rel){
             Node* n = rel->get_from_node();
             rel->change_property("rank", [&n](boost::any& p){
                 p = boost::any_cast<double>(n->read_property("rank"))/boost::any_cast<size_t>(n->read_property("num_out_rels"));
                 //std::cout << p << std::endl;
             }); 
         });
-        for_each(iter_node, [&is_smaller, &diff_limit](Node* n){
+        for_each_time(iter_node, [&is_smaller, &diff_limit](Node* n){
                 double sum = 0;
                 const std::vector<Relationship*> vec = n->get_incomming_rel();
                 for(size_t i=0; i< vec.size(); i++){ //hier hat mit zeigern nicht funktioniert, da das array als Kopie gesendet wird und somit die zeiger ins nichts zeigen solange es nicht zwischengespeichert wird
