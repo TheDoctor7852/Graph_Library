@@ -4,3 +4,5 @@ example/example
 example/PageRank
 example/example_timed
 example/example_workstealing
+example/example_gperf
+example/example_ownWorkstealing

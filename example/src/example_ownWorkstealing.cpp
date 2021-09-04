@@ -1,11 +1,12 @@
 #include "graph.hpp"
-#include "graph_node_iterator_workstealing.hpp"
+#include "graph_node_iterator_workstealing_own.hpp"
+#include "/home/jan/Programms/gperftools-2.9.1/src/gperftools/profiler.h"
 
 bool vergleiche_Werte(std::chrono::microseconds& a, std::chrono::microseconds&b){
     return (a.count() < b.count());
 }
 
-void generate_statistics(Graph_Node_Iterator_Timed_Workstealing& iter){
+void generate_statistics(Graph_Node_Iterator_Timed_Workstealing_Own& iter){
     std::vector<std::vector<std::chrono::microseconds>> process_and_wait_durations(iter.get_times_vec()[0].size());
     std::vector<std::chrono::microseconds> biggest_Process_diff = {};
     //werte sortieren
@@ -57,7 +58,7 @@ void generate_statistics(Graph_Node_Iterator_Timed_Workstealing& iter){
     std::cout << "Median-\"first and last Process started\"-Wartezeit ist: " << biggest_Process_diff[biggest_Process_diff.size()/2].count() << std::endl;
 }
 
-void find_bigest_startdiff(Graph_Node_Iterator_Timed_Workstealing& iter, size_t pos){
+void find_bigest_startdiff(Graph_Node_Iterator_Timed_Workstealing_Own& iter, size_t pos){
     size_t latest_pos = 0;
     size_t earlyest_pos = 0;
     auto latest = iter.get_times_vec()[pos][0].first;
@@ -179,7 +180,7 @@ void init_rel_serial(graph_db_ptr& graph, Graph& g){
 }
 
 void init_labels(Graph& g){
-    Graph_Node_Iterator_Timed_Workstealing iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
+    Graph_Node_Iterator_Timed_Workstealing_Own iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
     for_each_time_workstealing(iter, [](Node* n){
         n->add_property("label", n->get_id());
     });
@@ -193,7 +194,7 @@ void init_labels_serial(Graph& g){
 
 void label_prop(Graph& g){
 
-    Graph_Node_Iterator_Timed_Workstealing iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
+    Graph_Node_Iterator_Timed_Workstealing_Own iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
     bool did_change = true;
     size_t turns = 0;
     size_t max_turns = 4000;
@@ -203,7 +204,7 @@ void label_prop(Graph& g){
     
     while(did_change && turns < max_turns){
         did_change = false;
-        for_each_random_workstealing(iter, [&did_change, &rng](Node* n){
+        for_each_workstealing(iter, [&did_change, &rng](Node* n){
             if(n->get_outgoing_rel().size() > 1){
                 std::uniform_int_distribution<int> distrib(0,n->get_outgoing_rel().size()-1);
                 size_t pos = distrib(rng);
@@ -229,7 +230,7 @@ void label_prop(Graph& g){
 
 void label_prop_time(Graph& g){
 
-    Graph_Node_Iterator_Timed_Workstealing iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
+    Graph_Node_Iterator_Timed_Workstealing_Own iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
     bool did_change = true;
     size_t turns = 0;
     size_t max_turns = 4000;
@@ -239,7 +240,7 @@ void label_prop_time(Graph& g){
     
     while(did_change && turns < max_turns){
         did_change = false;
-        for_each_random_time_workstealing(iter, [&did_change, &rng](Node* n){
+        for_each_time_workstealing(iter, [&did_change, &rng](Node* n){
             if(n->get_outgoing_rel().size() > 1){
                 std::uniform_int_distribution<int> distrib(0,n->get_outgoing_rel().size()-1);
                 size_t pos = distrib(rng);
@@ -278,7 +279,7 @@ void label_prop_time(Graph& g){
 
 void label_prop_serial(Graph& g){
 
-    Graph_Node_Iterator_Timed_Workstealing iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
+    Graph_Node_Iterator_Timed_Workstealing_Own iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
     bool did_change = true;
     size_t turns = 0;
     size_t max_turns = 4000;
@@ -347,10 +348,13 @@ int main(){
     Graph g;
 
     std::string path_Graphs = "../../../C++_Programme/Poseidon_GraphAnalytics/test/graph/";
-
     auto pool = graph_pool::open(path_Graphs + "20000nodeGraph");
     auto graph = pool->open_graph("20000nodeGraph");
-
+/*
+    std::string path_small_Graphs = "../../../C++_Programme/Graph_Library/example/graph/";
+    auto pool = graph_pool::open(path_small_Graphs + "Label_Prop_Test");
+    auto graph = pool->open_graph("Label_Prop_Test");
+*/
     auto start_init = std::chrono::high_resolution_clock::now();
 
     init_nodes_in_graph(graph, g);
@@ -387,7 +391,10 @@ int main(){
     auto start_label_prop= std::chrono::high_resolution_clock::now();
 
     //label_prop(g);
+    //ProfilerStart("prof_own_ws.out");
     label_prop_time(g);
+    //ProfilerFlush();
+    //ProfilerStop();
     //label_prop_serial(g);
 
     auto stop_label_prop = std::chrono::high_resolution_clock::now();
