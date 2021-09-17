@@ -1,3 +1,8 @@
 library_classes/build/libgraph_components.so
 *.vscode
 example/example
+example/example_gperf
+example/example_ownWorkstealing
+example/example_timed
+example/example_workstealing
+Valgrind_outputs/example_parallel/callgrind.out.4444
