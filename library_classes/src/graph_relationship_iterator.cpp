@@ -43,8 +43,10 @@ const std::vector<u_int64_t>& Graph_Rel_Iterator::get_prime_numbers(){
 void for_each(Graph_Rel_Iterator g_it, FunctionTypeRel f){
     thread_pool pool;
     std::vector<std::future<bool>> futures;
+    auto tx = current_transaction();
     for(size_t i=0;i< g_it.get_thread_limits().size()-1;i++){
-        futures.emplace_back(pool.submit([&g_it,f, i](){
+        futures.emplace_back(pool.submit([&g_it,f, i, &tx](){
+            current_transaction_ = tx;
             auto it_start = g_it.get_begin() + g_it.get_thread_limits()[i];
             auto it_end = g_it.get_begin() + g_it.get_thread_limits()[i+1];
        
@@ -62,8 +64,10 @@ void for_each(Graph_Rel_Iterator g_it, FunctionTypeRel f){
 void for_each_random(Graph_Rel_Iterator g_it, FunctionTypeRel f){
     thread_pool pool;
     std::vector<std::future<bool>> futures;
+    auto tx = current_transaction();
     for(size_t i=0;i< g_it.get_thread_limits().size()-1;i++){
-        futures.emplace_back(pool.submit([&g_it,f, i](){
+        futures.emplace_back(pool.submit([&g_it,f, i, &tx](){
+            current_transaction_ = tx;
             std::random_device rd;  
             std::mt19937 rng(rd()); 
             std::uniform_int_distribution<int> distrib(0,g_it.get_prime_numbers().size()-1);
@@ -84,42 +88,20 @@ void for_each_random(Graph_Rel_Iterator g_it, FunctionTypeRel f){
     }
 }
 
-void for_each_time(Graph_Rel_Iterator g_it, FunctionTypeRel f){
-    thread_pool pool;
-    std::vector<std::future<bool>> futures;
-    for(size_t i=0;i< g_it.get_thread_limits().size()-1;i++){
-        futures.emplace_back(pool.submit([&g_it,f, i](){
-            auto start = std::chrono::high_resolution_clock::now();
-            auto it_start = g_it.get_begin() + g_it.get_thread_limits()[i];
-            auto it_end = g_it.get_begin() + g_it.get_thread_limits()[i+1];
-       
-            for(auto it = it_start; it != it_end; it++){
-                f(it->get());
-            }
-            auto end = std::chrono::high_resolution_clock::now();
-            std::cout << "Process " << g_it.get_thread_limits()[i] << " started: " << std::chrono::time_point_cast<std::chrono::microseconds>(start).time_since_epoch().count() << "  ";
-            std::cout << "Process " << g_it.get_thread_limits()[i] << " ended: " << std::chrono::time_point_cast<std::chrono::microseconds>(end).time_since_epoch().count();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start); 
-            std::cout << "Time taken by Process "  << g_it.get_thread_limits()[i] << ": "<< duration.count() << " microseconds" << std::endl;
-            return true;
-        }));
-    }
-    auto start = std::chrono::high_resolution_clock::now();
-    for(auto it = futures.begin(); it != futures.end(); it++){ 
-        it->get();   
-    }
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start); 
-    std::cout << "Time taken by waiting to finsish: "  <<  duration.count() << " microseconds" << std::endl;
-    std::cout << "--------------------------------------------------------------------------------------------------------------------" << std::endl;
+void for_each_openmp(Graph_Rel_Iterator g_it, FunctionTypeRel f){
+    auto tx = current_transaction();
+    #pragma omp parallel for
+        for(auto it=g_it.get_begin(); it!=g_it.get_end(); it++){
+            current_transaction_ = tx;
+            f(it->get());
+        }
 }
 
-void for_each_random_time(Graph_Rel_Iterator g_it, FunctionTypeRel f){
-    thread_pool pool;
-    std::vector<std::future<bool>> futures;
-    for(size_t i=0;i< g_it.get_thread_limits().size()-1;i++){
-        futures.emplace_back(pool.submit([&g_it,f, i](){
-            auto start_timer = std::chrono::high_resolution_clock::now();
+void for_each_random_openmp(Graph_Rel_Iterator g_it, FunctionTypeRel f){
+    auto tx = current_transaction();
+    #pragma omp parallel for
+        for(size_t i=0;i< g_it.get_thread_limits().size()-1;i++){
+            current_transaction_ = tx;
             std::random_device rd;  
             std::mt19937 rng(rd()); 
             std::uniform_int_distribution<int> distrib(0,g_it.get_prime_numbers().size()-1);
@@ -132,20 +114,5 @@ void for_each_random_time(Graph_Rel_Iterator g_it, FunctionTypeRel f){
                 f((iter+offset)->get());
                 offset = (offset + current_prime) % (end-start);
             }
-            auto end_timer = std::chrono::high_resolution_clock::now();
-            std::cout << "Process " << g_it.get_thread_limits()[i] << " started: " << std::chrono::time_point_cast<std::chrono::microseconds>(start_timer).time_since_epoch().count() << "  ";
-            std::cout << "Process " << g_it.get_thread_limits()[i] << " ended: " << std::chrono::time_point_cast<std::chrono::microseconds>(end_timer).time_since_epoch().count();
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_timer - start_timer); 
-            std::cout << "Time taken by Process "  << g_it.get_thread_limits()[i] << ": "<< duration.count() << " microseconds" << std::endl;
-            return true;
-        }));
-    }
-    auto start = std::chrono::high_resolution_clock::now();
-    for(auto it = futures.begin(); it != futures.end(); it++){
-        it->get();
-    }
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start); 
-    std::cout << "Time taken by waiting to finsish: "  <<  duration.count() << " microseconds" << std::endl;
-    std::cout << "--------------------------------------------------------------------------------------------------------------------" << std::endl;
+        }
 }

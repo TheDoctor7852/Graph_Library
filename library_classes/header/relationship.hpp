@@ -8,12 +8,9 @@
   class implementing Relationships of a Graph
 */
 class Relationship{
-        relationship::id_t id;
+        relationship* graph_reference;
         std::shared_mutex write;
         
-        Node* from;
-        Node* to;
-
         /*
           maintain Propertys added to this Node
         */
@@ -21,7 +18,7 @@ class Relationship{
 
     public:
 
-        Relationship(relationship::id_t input, Node* from_node, Node* to_node);
+        Relationship(relationship* input);
         Relationship(Relationship&& r);
 
         /*
@@ -47,17 +44,7 @@ class Relationship{
         /*
           get the Relationship id
         */
-        relationship::id_t get_id();
-
-        /*
-            returns a pointer to the node the relationship originates from.
-        */
-        Node* get_from_node();
-
-        /*
-            returns a pointer to the node the relationship points to.
-        */
-        Node* get_to_node();
+        const relationship* get_reference();
 };
 
 #endif

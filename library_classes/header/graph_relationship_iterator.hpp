@@ -5,6 +5,8 @@
 #include "thread_pool.hpp"
 #include <random>
 
+#include<omp.h>
+
 #ifndef GRAPH_REL_ITER_HPP
 #define GRAPH_REL_ITER_HPP
 
@@ -49,8 +51,8 @@ void for_each(Graph_Rel_Iterator g_it, FunctionTypeRel f);
 */
 void for_each_random(Graph_Rel_Iterator g_it, FunctionTypeRel f);
 
-void for_each_time(Graph_Rel_Iterator g_it, FunctionTypeRel f);
+void for_each_omp(Graph_Rel_Iterator g_it, FunctionTypeRel f);
 
-void for_each_random_time(Graph_Rel_Iterator g_it, FunctionTypeRel f);
+void for_each_random_omp(Graph_Rel_Iterator g_it, FunctionTypeRel f);
 
 #endif

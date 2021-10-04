@@ -12,6 +12,7 @@
     class implementing a graph
 */
 class Graph{
+    graph_db_ptr* graph;
     /*
         stores the Nodes
     */
@@ -23,23 +24,11 @@ class Graph{
     std::vector<std::unique_ptr<Relationship>> rel_vec;
 
 
-    std::shared_mutex write_nodes;
-    std::shared_mutex write_rel;
-
-    //void add_incomming_relationship(Node* n, Relationship* r);
-
-    //void add_outgoing_relationship(Node* n, Relationship* r);
+    std::mutex write_nodes;
+    std::mutex write_rel;
 
     public:
-        Graph() = default;
-        //Graph(graph_db_ptr& graph, std::function<void()> f_nodes, std::function<std::vector<node::id_t>(std::vector<std::unique_ptr<Node>>::iterator)> f_rels, size_t thread_count = std::thread::hardware_concurrency());
-        ~Graph();
-
-        /*
-            use multithreading to overwrite the existing Relationships. The Function is given the currently viewed Node and is meant to return the ids of all nodes a Relationship should be formed to.
-            TODO: dont read the nodes off of the position, make an Array like in other examples with pointers and graph->nodas_as_vec.capacity
-        */
-        void initialise_relationships(graph_db_ptr& graph, std::function<std::vector<node::id_t>(std::vector<std::unique_ptr<Node>>::iterator)> f_rels, size_t thread_count = std::thread::hardware_concurrency());
+        Graph(graph_db_ptr& g);
 
         /*
             adds the Node with the given id
@@ -48,17 +37,11 @@ class Graph{
 
         /*
             adds the Relationship between the given nodes.
-            TODO: change the way the id is generated or given by the user
         */
-        Relationship* add_relationship(std::vector<std::unique_ptr<Node>>::iterator from_node, std::vector<std::unique_ptr<Node>>::iterator to_node);
+        Relationship* add_relationship(relationship::id_t input);
 
         /*
-            adds the Relationship between the given nodes.
-        */
-        Relationship* add_relationship(Node* from_node, Node* to_node);
-
-        /*
-            deletes the given node. Note that all Relationships leaving and pointing to this node must be deleted before
+            deletes the given node.
         */
         void delete_node(std::vector<std::unique_ptr<Node>>::iterator it); 
 
@@ -86,6 +69,8 @@ class Graph{
             get an iterator to one element behind the last relationship
         */
         std::vector<std::unique_ptr<Relationship>>::iterator get_rel_iterator_end();
+
+        graph_db_ptr& get_graph();
 };
 
 #endif

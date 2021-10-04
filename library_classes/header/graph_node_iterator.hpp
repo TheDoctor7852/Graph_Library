@@ -5,6 +5,8 @@
 #include "thread_pool.hpp"
 #include <random>
 
+#include<omp.h>
+
 #ifndef GRAPH_NODE_ITER_HPP
 #define GRAPH_NODE_ITER_HPP
 
@@ -50,8 +52,8 @@ void for_each(Graph_Node_Iterator g_it, FunctionTypeNode f);
 void for_each_random(Graph_Node_Iterator g_it, FunctionTypeNode f);
 
 
-void for_each_time(Graph_Node_Iterator g_it, FunctionTypeNode f);
+void for_each_openmp(Graph_Node_Iterator g_it, FunctionTypeNode f);
 
-void for_each_random_time(Graph_Node_Iterator g_it, FunctionTypeNode f);
+void for_each_random_openmp(Graph_Node_Iterator g_it, FunctionTypeNode f);
 
 #endif

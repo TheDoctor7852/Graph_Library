@@ -6,3 +6,6 @@ example/example_timed
 example/example_workstealing
 example/example_gperf
 example/example_ownWorkstealing
+example/graph/Label_Prop_Test
+example/graph/PageRank_example_Test
+example/create_graphs

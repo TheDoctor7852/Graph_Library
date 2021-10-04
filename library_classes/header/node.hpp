@@ -1,5 +1,6 @@
 #include <vector>
 #include <map>
+#include<shared_mutex>
 
 #include "nodes.hpp"
 
@@ -20,51 +21,13 @@ class Graph;
   class implementing Nodes of a Graph
 */
 class Node{
-        node::id_t id;
+        node* graph_reference;
         std::shared_mutex write_property;
-        std::shared_mutex write_inc;
-        std::shared_mutex write_out;
 
-        /*
-          keep track of Realtionships pointing to this Node
-        */
-        std::vector<Relationship*> incomming_rel;
-
-        /*
-          keep track of Realtionships leaving this Node
-        */
-        std::vector<Relationship*> outgoing_rel;
-        
-        /*
-          maintain Propertys added to this Node
-        */
         std::map<std::string, boost::any> propertys;
 
-        friend Relationship;
-        friend Graph;
-
-        /*
-          adds an Relationship to the incomming Relationships Vector.
-        */
-        void add_incomming_rel(Relationship* input);
-
-        /*
-          removes an Relationship from the incomming Relationships Vector.
-        */
-        void remove_incomming_rel(Relationship* input);
-
-        /*
-          adds an Relationship to the outgoing Relationships Vector.
-        */
-        void add_outgoing_rel(Relationship* input);
-
-        /*
-          removes an Relationship from the outgoing Relationships Vector.
-        */
-        void remove_outgoing_rel(Relationship* input);
-
     public:
-        Node(node::id_t input);
+        Node(node* input);
         Node(Node&& n);
 
         /*
@@ -87,20 +50,7 @@ class Node{
         */
         const boost::any read_property(std::string key);
 
-        /*
-          get the vector keeping track of Realtionships pointing to this Node
-        */
-        const std::vector<Relationship*> get_incomming_rel();
-
-        /*
-          get the vector keeping track of Realtionships leaving this Node
-        */
-        const std::vector<Relationship*> get_outgoing_rel();
-
-        /*
-          get the Node id
-        */
-        node::id_t get_id();
+        const node* get_reference();
 };
 
 #endif

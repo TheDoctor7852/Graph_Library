@@ -210,9 +210,23 @@ int main(){
 
     std::string path_Graphs = "../../../C++_Programme/Poseidon_GraphAnalytics/test/graph/";
 
-    auto pool = graph_pool::open(path_Graphs + "20000nodeGraph");
-    auto graph = pool->open_graph("20000nodeGraph");
+    auto pool = graph_pool::open(path_Graphs +"5000nodeGraph");
+    auto graph = pool->open_graph("5000nodeGraph");
 
+    //auto pool = graph_pool::open(path_Graphs +"10000nodeGraph");
+    //auto graph = pool->open_graph("10000nodeGraph");
+
+    //auto pool = graph_pool::open(path_Graphs + "20000nodeGraph");
+    //auto graph = pool->open_graph("20000nodeGraph");
+
+    //auto pool = graph_pool::open(path_Graphs +"30000nodeGraph");
+    //auto graph = pool->open_graph("30000nodeGraph");
+
+    //auto pool = graph_pool::open(path_Graphs +"40000nodeGraph");
+    //auto graph = pool->open_graph("40000nodeGraph");
+
+    //auto pool = graph_pool::open(path_Graphs +"50000nodeGraph");
+    //auto graph = pool->open_graph("50000nodeGraph");
     auto start_init = std::chrono::high_resolution_clock::now();
 
     init_nodes_in_graph(graph, g);
@@ -250,8 +264,8 @@ int main(){
 
     auto start_label_prop= std::chrono::high_resolution_clock::now();
 
-    label_prop(g);
-    //label_prop_serial(g);
+    //label_prop(g);
+    label_prop_serial(g);
 
     auto stop_label_prop = std::chrono::high_resolution_clock::now();
 
