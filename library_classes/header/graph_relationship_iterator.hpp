@@ -51,8 +51,8 @@ void for_each(Graph_Rel_Iterator g_it, FunctionTypeRel f);
 */
 void for_each_random(Graph_Rel_Iterator g_it, FunctionTypeRel f);
 
-void for_each_omp(Graph_Rel_Iterator g_it, FunctionTypeRel f);
+void for_each_openmp(Graph_Rel_Iterator g_it, FunctionTypeRel f);
 
-void for_each_random_omp(Graph_Rel_Iterator g_it, FunctionTypeRel f);
+void for_each_random_openmp(Graph_Rel_Iterator g_it, FunctionTypeRel f);
 
 #endif

@@ -23,14 +23,43 @@ void init_ranks(Graph &g)
                  n->add_property("new_rank", 1.0);
                  size_t count = 0;
 
-                 g.get_graph()->foreach_from_relationship_of_node((*n->get_reference()), [&count](relationship &r)
+                 g.get_graph()->foreach_from_relationship_of_node(g.get_graph()->node_by_id(n->get_id()), [&count](relationship &r)
                                                                   { count++; });
                  
         if(count == 0){
             std::cout << "here" << std::endl;
             g.get_graph()->nodes([&g,&n, &count](node& node){
-                if(n->get_reference()->id() != node.id()){
-                    g.get_graph()->add_relationship(n->get_reference()->id(), node.id(), "label_prop",{});
+                if(n->get_id() != node.id()){
+                    g.get_graph()->add_relationship(n->get_id(), node.id(), "label_prop",{});
+                    count++;
+                }
+            });
+        }
+        
+                 n->add_property("neighbour_count", count);
+             });
+    g.get_graph()->commit_transaction();
+}
+
+void init_ranks_omp(Graph &g)
+{
+    Graph_Node_Iterator iter_node(g.get_node_iterator_begin(), g.get_node_iterator_end());
+    
+    g.get_graph()->begin_transaction();
+    for_each_openmp(iter_node, [&g](Node *n)
+             {
+                 n->add_property("rank", 1.0);
+                 n->add_property("new_rank", 1.0);
+                 size_t count = 0;
+
+                 g.get_graph()->foreach_from_relationship_of_node(g.get_graph()->node_by_id(n->get_id()), [&count](relationship &r)
+                                                                  { count++; });
+                 
+        if(count == 0){
+            std::cout << "here" << std::endl;
+            g.get_graph()->nodes([&g,&n, &count](node& node){
+                if(n->get_id() != node.id()){
+                    g.get_graph()->add_relationship(n->get_id(), node.id(), "label_prop",{});
                     count++;
                 }
             });
@@ -51,16 +80,16 @@ void init_ranks_serial(Graph &g)
                              (*it)->add_property("new_rank", 1.0);
                              size_t count = 0;
 
-                             g.get_graph()->foreach_from_relationship_of_node((*(*it)->get_reference()), [&count](relationship &r)
+                             g.get_graph()->foreach_from_relationship_of_node(g.get_graph()->node_by_id((*it)->get_id()), [&count](relationship &r)
                                                                               { count++; });
                              if (count == 0)
                              {
                                  std::cout << "here" << std::endl;
                                  g.get_graph()->nodes([&g, &it, &count](node &node)
                                                       {
-                                                          if ((*it)->get_reference()->id() != node.id())
+                                                          if ((*it)->get_id() != node.id())
                                                           {
-                                                              g.get_graph()->add_relationship((*it)->get_reference()->id(), node.id(), "label_prop", {});
+                                                              g.get_graph()->add_relationship((*it)->get_id(), node.id(), "label_prop", {});
                                                               count++;
                                                           }
                                                       });
@@ -89,12 +118,12 @@ void pageRank(Graph &g)
         for_each(iter_node, [&is_smaller, &diff_limit, &g](Node *n)
                  {
                      double sum = 0;
-                     auto iter = g.get_node_iterator_begin();
+                     //auto iter = g.get_node_iterator_begin();
 
-                     g.get_graph()->foreach_to_relationship_of_node(g.get_graph()->node_by_id(n->get_reference()->id()), [&iter, &sum](relationship &r)
+                     g.get_graph()->foreach_to_relationship_of_node(g.get_graph()->node_by_id(n->get_id()), [&g, &sum](relationship &r)
                                                                     {
-                                                                        auto iter_current = iter + r.from_node_id();
-                                                                        sum = sum + (boost::any_cast<double>((*iter_current)->read_property("rank")) / boost::any_cast<size_t>((*iter_current)->read_property("neighbour_count")));
+                                                                        auto neighbour = g.get_node(r.from_node_id());
+                                                                        sum = sum + boost::any_cast<double>(neighbour->read_property("rank")) / boost::any_cast<size_t>(neighbour->read_property("neighbour_count"));
                                                                     });
                      double diff_before = boost::any_cast<double>(n->read_property("rank"));
                      n->change_property("new_rank", [&sum](boost::any &p)
@@ -107,6 +136,55 @@ void pageRank(Graph &g)
                  });
 
         for_each(iter_node, [](Node *n)
+                 {
+                     double d = boost::any_cast<double>(n->read_property("new_rank"));
+                     n->change_property("rank", [&d](boost::any &p)
+                                        { p = d; });
+                 });
+
+        g.get_graph()->commit_transaction();
+
+        turns++;
+    }
+    std::cout << "Turns taken: " << turns << std::endl;
+}
+
+void pageRank_omp(Graph &g)
+{
+    Graph_Node_Iterator iter_node(g.get_node_iterator_begin(), g.get_node_iterator_end());
+    Graph_Rel_Iterator iter_rel(g.get_rel_iterator_begin(), g.get_rel_iterator_end());
+
+    bool is_smaller = false;
+    double diff_limit = 0.001;
+
+    size_t turns = 0;
+    size_t max_turns = 100;
+    while (!is_smaller && turns < max_turns)
+    {
+        is_smaller = true;
+ 
+        g.get_graph()->begin_transaction();
+        for_each_openmp(iter_node, [&is_smaller, &diff_limit, &g](Node *n)
+                 {
+                     double sum = 0;
+                     //auto iter = g.get_node_iterator_begin();
+
+                     g.get_graph()->foreach_to_relationship_of_node(g.get_graph()->node_by_id(n->get_id()), [&g, &sum](relationship &r)
+                                                                    {
+                                                                        auto neighbour = g.get_node(r.from_node_id());
+                                                                        sum = sum + boost::any_cast<double>(neighbour->read_property("rank")) / boost::any_cast<size_t>(neighbour->read_property("neighbour_count"));
+                                                                    });
+                     double diff_before = boost::any_cast<double>(n->read_property("rank"));
+                     n->change_property("new_rank", [&sum](boost::any &p)
+                                        { p = 0.15 + 0.85 * sum; });
+                     double diff_after = boost::any_cast<double>(n->read_property("new_rank"));
+                     if (abs(diff_before - diff_after) > diff_limit)
+                     {
+                         is_smaller = false;
+                     }
+                 });
+
+        for_each_openmp(iter_node, [](Node *n)
                  {
                      double d = boost::any_cast<double>(n->read_property("new_rank"));
                      n->change_property("rank", [&d](boost::any &p)
@@ -138,12 +216,12 @@ void pageRank_serial(Graph &g)
         for (auto n = g.get_node_iterator_begin(); n != g.get_node_iterator_end(); n++)
         {
             double sum = 0;
-            auto iter = g.get_node_iterator_begin();
+            //auto iter = g.get_node_iterator_begin();
 
-            g.get_graph()->foreach_to_relationship_of_node(g.get_graph()->node_by_id((*n)->get_reference()->id()), [&iter, &sum](relationship &r)
+            g.get_graph()->foreach_to_relationship_of_node(g.get_graph()->node_by_id((*n)->get_id()), [&g,&sum](relationship &r)
                                                            {
-                                                               auto iter_current = iter + r.from_node_id();
-                                                               sum = sum + boost::any_cast<double>((*iter_current)->read_property("rank")) / boost::any_cast<size_t>((*iter_current)->read_property("neighbour_count"));
+                                                               auto neighbour = g.get_node(r.from_node_id());
+                                                               sum = sum + boost::any_cast<double>(neighbour->read_property("rank")) / boost::any_cast<size_t>(neighbour->read_property("neighbour_count"));
                                                            });
 
             double diff_before = boost::any_cast<double>((*n)->read_property("rank"));
@@ -178,7 +256,6 @@ void cleanup(graph_db_ptr& graph){
                                   });
     graph->commit_transaction();
 
-    graph->begin_transaction();
 }
 
 int main()
@@ -196,19 +273,19 @@ int main()
     //auto graph = pool->open_graph("PageRank_example_Test");
 
     //auto pool = graph_pool::open(path_Graphs+"5000nodeGraph");
-   // auto graph = pool->open_graph("5000nodeGraph");
+    //auto graph = pool->open_graph("5000nodeGraph");
 
     //auto pool = graph_pool::open(path_Graphs+"10000nodeGraph");
     //auto graph = pool->open_graph("10000nodeGraph");
 
-    //auto pool = graph_pool::open(path_Graphs + "20000nodeGraph");
-    //auto graph = pool->open_graph("20000nodeGraph");
+    auto pool = graph_pool::open(path_Graphs + "20000nodeGraph");
+    auto graph = pool->open_graph("20000nodeGraph");
 
     //auto pool = graph_pool::open(path_Graphs+"30000nodeGraph");
     //auto graph = pool->open_graph("30000nodeGraph");
 
-    auto pool = graph_pool::open(path_Graphs+"40000nodeGraph");
-    auto graph = pool->open_graph("40000nodeGraph");
+    //auto pool = graph_pool::open(path_Graphs+"40000nodeGraph");
+    //auto graph = pool->open_graph("40000nodeGraph");
 
     //auto pool = graph_pool::open(path_Graphs+"50000nodeGraph");
     //auto graph = pool->open_graph("50000nodeGraph");
@@ -242,9 +319,9 @@ int main()
 
     auto start_init_label = std::chrono::high_resolution_clock::now();
 
-    init_ranks(g); // auf Knoten und Kanten ausführen, sodass alle die Eigenschaft haben -> auch ausgehende Kanten zählen und dazuschreiben
+    //init_ranks(g); // auf Knoten und Kanten ausführen, sodass alle die Eigenschaft haben -> auch ausgehende Kanten zählen und dazuschreiben
     //init_ranks_serial(g);
-    //init_labels_serial(g);
+    init_ranks_omp(g);
 
     auto stop_init_label = std::chrono::high_resolution_clock::now();
 
@@ -255,8 +332,9 @@ int main()
 
     auto start_label_prop = std::chrono::high_resolution_clock::now();
 
-    pageRank(g);
+    //pageRank(g);
     //pageRank_serial(g);
+    pageRank_omp(g);
 
     auto stop_label_prop = std::chrono::high_resolution_clock::now();
 
@@ -273,6 +351,8 @@ int main()
               << duration_all.count() << " microseconds" << std::endl;
 
     cleanup(graph);
+
+    //graph->begin_transaction();
 
     /*
     for(auto it=g.get_node_iterator_begin(); it != g.get_node_iterator_end();it++){
@@ -292,7 +372,7 @@ int main()
 /*
     for (auto it = g.get_node_iterator_begin(); it != g.get_node_iterator_end(); it++)
     {
-        std::cout << graph->get_node_description((*it)->get_reference()->id()).properties.at("name") << " hat den Rank: " << (*it)->read_property("rank") << std::endl;
+        std::cout << graph->get_node_description((*it)->get_id()).properties.at("name") << " hat den Rank: " << (*it)->read_property("rank") << std::endl;
     }*/
     /*
     graph->relationships_by_label("label_prop", [](relationship& r){
@@ -315,5 +395,5 @@ int main()
         std::cout << graph->get_node_description((*it)->get_from_node()->get_id()).properties.at("name") << "  nach: " << graph->get_node_description((*it)->get_to_node()->get_id()).properties.at("name") << std::endl;
     }
 */
-    graph->commit_transaction();
+   // graph->commit_transaction();
 }
