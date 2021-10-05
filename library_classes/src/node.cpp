@@ -1,13 +1,13 @@
 #include <node.hpp>
 
-Node::Node(node* input){
-    graph_reference = input;
+Node::Node(node::id_t input){
+    id = input;
     propertys = std::map<std::string, boost::any>();
 }
 
 Node::Node(Node&& n){
     std::unique_lock<std::shared_mutex> lock_prop(n.write_property);
-    graph_reference = std::move(n.graph_reference);
+    id = std::move(n.id);
     propertys = std::move(n.propertys);
 }
 
@@ -36,6 +36,6 @@ bool Node::change_property(std::string key, std::function<void(boost::any&)> f){
         }
 }
 
-const node* Node::get_reference(){
-    return graph_reference;
+const node::id_t& Node::get_id(){
+    return id;
 }

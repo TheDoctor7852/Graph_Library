@@ -8,7 +8,7 @@
   class implementing Relationships of a Graph
 */
 class Relationship{
-        relationship* graph_reference;
+        relationship::id_t id;
         std::shared_mutex write;
         
         /*
@@ -18,7 +18,7 @@ class Relationship{
 
     public:
 
-        Relationship(relationship* input);
+        Relationship(relationship::id_t input);
         Relationship(Relationship&& r);
 
         /*
@@ -44,7 +44,7 @@ class Relationship{
         /*
           get the Relationship id
         */
-        const relationship* get_reference();
+        const relationship::id_t& get_id();
 };
 
 #endif

@@ -21,13 +21,13 @@ class Graph;
   class implementing Nodes of a Graph
 */
 class Node{
-        node* graph_reference;
+        node::id_t id;
         std::shared_mutex write_property;
 
         std::map<std::string, boost::any> propertys;
 
     public:
-        Node(node* input);
+        Node(node::id_t input);
         Node(Node&& n);
 
         /*
@@ -50,7 +50,7 @@ class Node{
         */
         const boost::any read_property(std::string key);
 
-        const node* get_reference();
+        const node::id_t& get_id();
 };
 
 #endif

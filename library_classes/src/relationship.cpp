@@ -1,13 +1,13 @@
 #include "relationship.hpp"
 
-Relationship::Relationship(relationship* input){
-    graph_reference = input;
+Relationship::Relationship(relationship::id_t input){
+    id = input;
     propertys = std::map<std::string, boost::any>();
 }
 
 Relationship::Relationship(Relationship&& r){
     std::unique_lock<std::shared_mutex> lock(r.write);
-    graph_reference = std::move(r.graph_reference);
+    id = std::move(r.id);
     propertys = std::move(r.propertys);
 }
 
@@ -41,6 +41,6 @@ const boost::any Relationship::read_property(std::string key){
     return propertys.at(key);
 }
 
-const relationship* Relationship::get_reference(){
-    return graph_reference;
+const relationship::id_t& Relationship::get_id(){
+    return id;
 }

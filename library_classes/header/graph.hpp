@@ -23,9 +23,13 @@ class Graph{
     */
     std::vector<std::unique_ptr<Relationship>> rel_vec;
 
+    std::unordered_map<size_t, Node*> node_index;
 
-    std::mutex write_nodes;
-    std::mutex write_rel;
+    std::unordered_map<size_t, Relationship*> rel_index;
+
+
+    std::shared_mutex write_nodes;
+    std::shared_mutex write_rel;
 
     public:
         Graph(graph_db_ptr& g);
@@ -69,6 +73,10 @@ class Graph{
             get an iterator to one element behind the last relationship
         */
         std::vector<std::unique_ptr<Relationship>>::iterator get_rel_iterator_end();
+
+        Node* get_node(node::id_t input);
+
+        Relationship* get_rel(relationship::id_t input);
 
         graph_db_ptr& get_graph();
 };

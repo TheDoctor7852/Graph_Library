@@ -20,32 +20,14 @@ create_graphs: $(OBJDIR)/create_graphs.o
 $(OBJDIR)/create_graphs.o: $(SRCDIR)/graph.cpp
 	g++ -g $(CXX_FLAGS) $(CXX_DEFINES) $(INC) -I../library_classes/header  -o $@ -c $^
 
-example_timed: $(OBJDIR)/example_timed.o
-	g++ -g $(CXX_FLAGS) $^ -o $@ $(LINKER_COMMANDS) -Wl,-rpath,../library_classes/build -L../library_classes/build -lgraph_components -lprimesieve
-
-$(OBJDIR)/example_timed.o: $(SRCDIR)/example_timed.cpp
-	g++ -g $(CXX_FLAGS) $(CXX_DEFINES) $(INC) -I../library_classes/header  -o $@ -c $^
-
-example_workstealing: $(OBJDIR)/example_workstealing.o
-	g++ -g $(CXX_FLAGS) $^ -o $@ $(LINKER_COMMANDS) -Wl,-rpath,../library_classes/build -L../library_classes/build -lgraph_components -lprimesieve
-
-$(OBJDIR)/example_workstealing.o: $(SRCDIR)/example_workstealing.cpp
-	g++ -g $(CXX_FLAGS) $(CXX_DEFINES) $(INC) -I../library_classes/header -I/home/jan/Dokumente/Bachelorarbeit/Parallel_Librarys/work-stealing-queue -o $@ -c $^
-
-example_gperf: $(OBJDIR)/example_gperf.o
-	g++ -g $(CXX_FLAGS) $^ -o $@ $(LINKER_COMMANDS) -Wl,-rpath,../library_classes/build -L../library_classes/build -lgraph_components -lprimesieve -lprofiler
-
-$(OBJDIR)/example_gperf.o: $(SRCDIR)/example_gperf.cpp
-	g++ -g $(CXX_FLAGS) $(CXX_DEFINES) $(INC) -I../library_classes/header  -o $@ -c $^
-
-example_ownWorkstealing: $(OBJDIR)/example_ownWorkstealing.o
-	g++ -g $(CXX_FLAGS) $^ -o $@ $(LINKER_COMMANDS) -Wl,-rpath,../library_classes/build -L../library_classes/build -lgraph_components -lprimesieve -lprofiler
-
-$(OBJDIR)/example_ownWorkstealing.o: $(SRCDIR)/example_ownWorkstealing.cpp
-	g++ -g $(CXX_FLAGS) $(CXX_DEFINES) $(INC) -I../library_classes/header  -o $@ -c $^
-
 PageRank: $(OBJDIR)/pageRank.o
 	g++ -g $(CXX_FLAGS) $^ -o $@ $(LINKER_COMMANDS) -Wl,-rpath,../library_classes/build -L../library_classes/build -lgraph_components -lprimesieve
 
 $(OBJDIR)/pageRank.o: $(SRCDIR)/pageRank.cpp
+	g++ -g $(CXX_FLAGS) $(CXX_DEFINES) $(INC) -I../library_classes/header  -o $@ -c $^
+
+test: $(OBJDIR)/test.o
+	g++ -g $(CXX_FLAGS) $^ -o $@ $(LINKER_COMMANDS) -Wl,-rpath,../library_classes/build -L../library_classes/build -lgraph_components -lprimesieve
+
+$(OBJDIR)/test.o: $(SRCDIR)/test.cpp
 	g++ -g $(CXX_FLAGS) $(CXX_DEFINES) $(INC) -I../library_classes/header  -o $@ -c $^
