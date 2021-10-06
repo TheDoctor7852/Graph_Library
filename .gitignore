@@ -10,3 +10,6 @@ example/graph/Label_Prop_Test
 example/graph/PageRank_example_Test
 example/create_graphs
 example/test
+example/bfs
+example/label_prop_new
+example/graph/20000nodeGraph

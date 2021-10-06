@@ -7,16 +7,28 @@ Graph::Graph(graph_db_ptr& g): graph(&g){}
 
 Node* Graph::add_node(node::id_t input){
     std::unique_lock<std::shared_mutex> lock(write_nodes);
-    node_vec.emplace_back(std::make_unique<Node>(Node(input))); 
-    node_index.insert(std::make_pair(input,node_vec.back().get()));
-    return node_vec.back().get();
+    auto pos = node_index.find(input);
+    if(pos != node_index.end()){
+        return nullptr;
+    }else{
+        node_vec.emplace_back(std::make_unique<Node>(Node(input))); 
+        node_index.insert(std::make_pair(input,node_vec.back().get()));
+        return node_vec.back().get();
+    }
+    
 }
 
 Relationship* Graph::add_relationship(relationship::id_t input){
     std::unique_lock<std::shared_mutex> lock_rel(write_rel);
-    rel_vec.emplace_back(std::make_unique<Relationship>(Relationship((input)))); 
-    rel_index.insert(std::make_pair(input,rel_vec.back().get()));
-    return rel_vec.back().get();
+    auto pos = rel_index.find(input);
+    if(pos != rel_index.end()){
+        return nullptr;
+    }else{
+        rel_vec.emplace_back(std::make_unique<Relationship>(Relationship((input)))); 
+        rel_index.insert(std::make_pair(input,rel_vec.back().get()));
+        return rel_vec.back().get();
+    }
+    
 }
 
 

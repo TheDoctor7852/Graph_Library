@@ -2,33 +2,15 @@
 #include "graph_node_iterator.hpp"
 
 struct RelationshipWeight{
-    node::id_t id;
+    relationship::id_t id;
     double weight;
 
-    RelationshipWeight(node::id_t input_id, double input_weight){
+    RelationshipWeight(relationship::id_t input_id, double input_weight){
         id = input_id;
         weight = input_weight;
     }
 };
 
-void cleanup(graph_db_ptr& graph){
-    std::vector<relationship::id_t> vec;
-    graph->begin_transaction();
-
-    //cleanup
-    graph->relationships_by_label("label_prop", [&vec](relationship &r)
-                                  {
-                                      vec.push_back(r.id());
-                                  });
-    graph->commit_transaction();
-
-    for(size_t i=0; i<vec.size(); i++){
-        graph->begin_transaction();
-        graph->delete_relationship(vec[i]);
-        graph->commit_transaction();
-    }
-
-}
 
 double convertBoostAnyToDouble(boost::any input){
     try{
@@ -38,9 +20,9 @@ double convertBoostAnyToDouble(boost::any input){
     }
 }
 
-std::vector<node::id_t> determin_max_values_ids(std::vector<RelationshipWeight>& from_node){
+std::vector<relationship::id_t> determin_max_values_ids(std::vector<RelationshipWeight>& from_node){
     //initialisiere die benötigten Variablen
-    std::vector<node::id_t> result = {};
+    std::vector<relationship::id_t> result = {};
     bool found_max_last_round = true;
     RelationshipWeight max = RelationshipWeight(0,std::numeric_limits<double>::min());
     int position_of_max_ele = 0;
@@ -82,7 +64,7 @@ void init_labels_serial(Graph& g){
     }
 }
 
-void init_relationships_ser(Graph& g){
+void init_rel(Graph& g){
     std::string property = "values";
     double default_value = 1.0;
 
@@ -98,102 +80,34 @@ void init_relationships_ser(Graph& g){
                     graph->foreach_from_relationship_of_node(graph->node_by_id(active_node), [&] (relationship& r) {
                         //std::cout << "here" << std::endl;
                         if(graph->get_rship_description(r.id()).has_property(property)){
-                            from_node.push_back(RelationshipWeight(r.to_node_id(),convertBoostAnyToDouble(graph->get_rship_description(r.id()).properties.at(property))));
+                            from_node.push_back(RelationshipWeight(r.id(),convertBoostAnyToDouble(graph->get_rship_description(r.id()).properties.at(property))));
                         } else{
                             // sollte die Kante nicht die Property haben, wird der übergebene default_value verwendet 
-                            from_node.push_back(RelationshipWeight(r.to_node_id(),default_value)); 
+                            from_node.push_back(RelationshipWeight(r.id(),default_value)); 
                         }
                      });
-                     std::cout<< (*start)->get_id() << std::endl;
-                    size_t count = 0;
                     ret = determin_max_values_ids(from_node);
+                    auto iter_begin = g.get_rel_iterator_begin();
+                    auto iter_end = g.get_rel_iterator_end();
+                    size_t a = std::distance(iter_begin, iter_end);
                     for(size_t i= 0; i<ret.size(); i++){
-                        graph ->add_relationship((*start)->get_id(), ret[i], "label_prop", {});
-                        count++;
+                        g.add_relationship(ret[i]);
                     }
-                    (*start)->add_property("neighbour_count", count);
+                    iter_begin = g.get_rel_iterator_begin();
+                    auto iter_new_end = g.get_rel_iterator_end();
+                    size_t b = std::distance(iter_begin, iter_new_end);
+                    (*start)->add_property("begin_rel", a);
+                    (*start)->add_property("end_rel", b);
     }
 
     g.get_graph()->commit_transaction();
 }
 
-void init_relationships_par(Graph& g){
-    Graph_Node_Iterator g_it(g.get_node_iterator_begin(), g.get_node_iterator_end());
-
-    std::string property = "values";
-    double default_value = 1.0;
-
-    auto it_begin = g.get_node_iterator_begin();
-
-    g.get_graph()->begin_transaction();
-
-   for_each(g_it,[&g, &property, &default_value](Node* n){
-        std::vector<RelationshipWeight> from_node = {};
-        std::vector<node::id_t> ret = {};
-                    node::id_t active_node = n->get_id();
-                    auto graph = g.get_graph();
-                    graph->foreach_from_relationship_of_node(graph->node_by_id(active_node), [&] (relationship& r) {
-                        if(graph->get_rship_description(r.id()).has_property(property)){
-                            from_node.push_back(RelationshipWeight(r.to_node_id(),convertBoostAnyToDouble(graph->get_rship_description(r.id()).properties.at(property))));
-                        } else{
-                            // sollte die Kante nicht die Property haben, wird der übergebene default_value verwendet 
-                            from_node.push_back(RelationshipWeight(r.to_node_id(),default_value)); 
-                        }
-                     });
-                    size_t count =0;
-                    ret = determin_max_values_ids(from_node);
-                    for(size_t i= 0; i<ret.size(); i++){
-                        graph ->add_relationship(n->get_id(), ret[i], "label_prop", {});
-                        count++;
-                    }
-                    n->add_property("neighbour_count", count);
-    });
-
-    g.get_graph()->commit_transaction();
-}
-
-void init_relationships_omp(Graph& g){
-    Graph_Node_Iterator g_it(g.get_node_iterator_begin(), g.get_node_iterator_end());
-
-    std::string property = "values";
-    double default_value = 1.0;
-
-    auto it_begin = g.get_node_iterator_begin();
-
-    g.get_graph()->begin_transaction();
-
-   for_each_openmp(g_it,[&g, &property, &default_value](Node* n){
-        std::vector<RelationshipWeight> from_node = {};
-        std::vector<node::id_t> ret = {};
-                    node::id_t active_node = n->get_id();
-                    auto graph = g.get_graph();
-                    graph->foreach_from_relationship_of_node(graph->node_by_id(active_node), [&] (relationship& r) {
-                        if(graph->get_rship_description(r.id()).has_property(property)){
-                            from_node.push_back(RelationshipWeight(r.to_node_id(),convertBoostAnyToDouble(graph->get_rship_description(r.id()).properties.at(property))));
-                        } else{
-                            // sollte die Kante nicht die Property haben, wird der übergebene default_value verwendet 
-                            from_node.push_back(RelationshipWeight(r.to_node_id(),default_value)); 
-                        }
-                     });
-                    size_t count =0;
-                    ret = determin_max_values_ids(from_node);
-                    for(size_t i= 0; i<ret.size(); i++){
-                        graph ->add_relationship(n->get_id(), ret[i], "label_prop", {});
-                        count++;
-                    }
-                    n->add_property("neighbour_count", count);
-    });
-
-    g.get_graph()->commit_transaction();
-}
-
-
-void label_prop(Graph& g){
-
+void label_prop(Graph&g){
     Graph_Node_Iterator iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
     bool did_change = true;
     size_t turns = 0;
-    size_t max_turns = 4000;
+    size_t max_turns = 40;
 
     std::random_device rd;  
     std::mt19937 rng(rd());
@@ -203,22 +117,22 @@ void label_prop(Graph& g){
     while(did_change && turns < max_turns){
         did_change = false;
         for_each_random(iter, [&did_change, &rng, &g](Node* n){
-            std::vector<relationship::id_t> vec;
-                g.get_graph()->foreach_from_relationship_of_node(g.get_graph()->node_by_id(n->get_id()), "label_prop",[&vec](relationship& r){
-                    vec.push_back(r.id());
-                });
-            if(vec.size() > 1){
-                std::uniform_int_distribution<int> distrib(0,vec.size()-1);
+            size_t begin_rel = boost::any_cast<size_t>(n->read_property("begin_rel"));
+            size_t end_rel = boost::any_cast<size_t>(n->read_property("end_rel"));
+            size_t diff = end_rel - begin_rel;
+            if(diff > 1){
+                std::uniform_int_distribution<int> distrib(0,diff-1);
                 size_t pos = distrib(rng);
-                auto neigh = g.get_graph()->rship_by_id(vec[pos]).to_node_id();
+                size_t rel_offset = begin_rel+pos;
+                auto neigh = g.get_graph()->rship_by_id((g.get_rel_iterator_begin()+rel_offset)->get()->get_id()).to_node_id();
                 if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(neigh)->read_property("label"))){
                             n->change_property("label", [&neigh, &g](boost::any& a){
                                 a = g.get_node(neigh)->read_property("label");
                             });
                             did_change = true;
                         }
-            }else if(vec.size() == 1){
-                auto neigh = g.get_graph()->rship_by_id(vec[0]).to_node_id();
+            }else if(diff == 1){
+                auto neigh = g.get_graph()->rship_by_id((g.get_rel_iterator_begin()+boost::any_cast<size_t>(n->read_property("begin_rel")))->get()->get_id()).to_node_id();
                 if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(neigh)->read_property("label"))){
                             n->change_property("label", [&neigh, &g](boost::any& a){
                                 a = g.get_node(neigh)->read_property("label");
@@ -233,12 +147,11 @@ void label_prop(Graph& g){
     std::cout << "Turns taken: " << turns << std::endl;
 }
 
-void label_prop_omp(Graph& g){
-
+void label_prop_omp(Graph&g){
     Graph_Node_Iterator iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
     bool did_change = true;
     size_t turns = 0;
-    size_t max_turns = 4000;
+    size_t max_turns = 40;
 
     std::random_device rd;  
     std::mt19937 rng(rd());
@@ -248,31 +161,28 @@ void label_prop_omp(Graph& g){
     while(did_change && turns < max_turns){
         did_change = false;
         for_each_random_openmp(iter, [&did_change, &rng, &g](Node* n){
-            size_t count = boost::any_cast<size_t>(n->read_property("neighbour_count"));
-            if(count > 1){
-                std::uniform_int_distribution<int> distrib(0,count-1);
+            size_t begin_rel = boost::any_cast<size_t>(n->read_property("begin_rel"));
+            size_t end_rel = boost::any_cast<size_t>(n->read_property("end_rel"));
+            size_t diff = end_rel - begin_rel;
+            if(diff > 1){
+                std::uniform_int_distribution<int> distrib(0,diff-1);
                 size_t pos = distrib(rng);
-                g.get_graph()->foreach_from_relationship_of_node(g.get_graph()->node_by_id(n->get_id()),"label_prop", [&pos, &n, &g, &did_change](relationship& r){
-                    if(pos==0){
-                        if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(r.to_node_id())->read_property("label"))){
-                            n->change_property("label", [&n, &g, &r](boost::any& a){
-                                a = g.get_node(r.to_node_id())->read_property("label");
+                size_t rel_offset = begin_rel+pos;
+                auto neigh = g.get_graph()->rship_by_id((g.get_rel_iterator_begin()+rel_offset)->get()->get_id()).to_node_id();
+                if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(neigh)->read_property("label"))){
+                            n->change_property("label", [&neigh, &g](boost::any& a){
+                                a = g.get_node(neigh)->read_property("label");
                             });
                             did_change = true;
                         }
-                        }else{
-                            pos--;
-                    }
-                });
-            }else if(count == 1){
-                g.get_graph()->foreach_from_relationship_of_node(g.get_graph()->node_by_id(n->get_id()),"label_prop", [&n, &g, &did_change](relationship& r){
-                        if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(r.to_node_id())->read_property("label"))){
-                            n->change_property("label", [&n, &g, &r](boost::any& a){
-                                a = g.get_node(r.to_node_id())->read_property("label");
+            }else if(diff == 1){
+                auto neigh = g.get_graph()->rship_by_id((g.get_rel_iterator_begin()+boost::any_cast<size_t>(n->read_property("begin_rel")))->get()->get_id()).to_node_id();
+                if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(neigh)->read_property("label"))){
+                            n->change_property("label", [&neigh, &g](boost::any& a){
+                                a = g.get_node(neigh)->read_property("label");
                             });
                             did_change = true;
                         }
-                });
             }
         });
         turns++;
@@ -286,7 +196,7 @@ void label_prop_serial(Graph& g){
     Graph_Node_Iterator iter(g.get_node_iterator_begin(), g.get_node_iterator_end());
     bool did_change = true;
     size_t turns = 0;
-    size_t max_turns = 4000;
+    size_t max_turns = 40;
     size_t distance = std::distance(g.get_node_iterator_begin(), g.get_node_iterator_end());
 
     std::random_device rd;  
@@ -311,31 +221,28 @@ void label_prop_serial(Graph& g){
         u_int64_t offset = current_prime % distance;
         for(auto it = g.get_node_iterator_begin(); it != g.get_node_iterator_end(); it++){
             auto n = (it_start+offset)->get();
-            size_t count = boost::any_cast<size_t>(n->read_property("neighbour_count"));
-            if(count > 1){
-                std::uniform_int_distribution<int> distrib(0,count-1);
+            size_t begin_rel = boost::any_cast<size_t>(n->read_property("begin_rel"));
+            size_t end_rel = boost::any_cast<size_t>(n->read_property("end_rel"));
+            size_t diff = end_rel - begin_rel;
+            if(diff > 1){
+                std::uniform_int_distribution<int> distrib(0,diff-1);
                 size_t pos = distrib(rng);
-                g.get_graph()->foreach_from_relationship_of_node(g.get_graph()->node_by_id(n->get_id()),"label_prop", [&pos, &n, &g, &did_change](relationship& r){
-                    if(pos==0){
-                        if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(r.to_node_id())->read_property("label"))){
-                            n->change_property("label", [&n, &g, &r](boost::any& a){
-                                a = g.get_node(r.to_node_id())->read_property("label");
+                size_t rel_offset = begin_rel+pos;
+                auto neigh = g.get_graph()->rship_by_id((g.get_rel_iterator_begin()+rel_offset)->get()->get_id()).to_node_id();
+                if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(neigh)->read_property("label"))){
+                            n->change_property("label", [&neigh, &g](boost::any& a){
+                                a = g.get_node(neigh)->read_property("label");
                             });
                             did_change = true;
                         }
-                        }else{
-                            pos--;
-                    }
-                });
-            }else if(count == 1){
-                g.get_graph()->foreach_from_relationship_of_node(g.get_graph()->node_by_id(n->get_id()),"label_prop", [&n, &g, &did_change](relationship& r){
-                        if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(r.to_node_id())->read_property("label"))){
-                            n->change_property("label", [&n, &g, &r](boost::any& a){
-                                a = g.get_node(r.to_node_id())->read_property("label");
+            }else if(diff == 1){
+                auto neigh = g.get_graph()->rship_by_id((g.get_rel_iterator_begin()+boost::any_cast<size_t>(n->read_property("begin_rel")))->get()->get_id()).to_node_id();
+                if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(neigh)->read_property("label"))){
+                            n->change_property("label", [&neigh, &g](boost::any& a){
+                                a = g.get_node(neigh)->read_property("label");
                             });
                             did_change = true;
                         }
-                });
             }
             offset = (offset + current_prime) % distance;
         }
@@ -348,8 +255,8 @@ void label_prop_serial(Graph& g){
 int main(){
     std::string path_Graphs = "../../../big_graphs/graph/";
 
-    //auto pool = graph_pool::open("./graph/Label_Prop_Test");
-    //auto graph = pool->open_graph("Label_Prop_Test");
+    auto pool = graph_pool::open("./graph/Label_Prop_Test");
+    auto graph = pool->open_graph("Label_Prop_Test");
 
     //auto pool = graph_pool::open(path_Graphs +"5000nodeGraph");
     //auto graph = pool->open_graph("5000nodeGraph");
@@ -358,8 +265,8 @@ int main(){
     //auto graph = pool->open_graph("10000nodeGraph");
 
     //auto pool = graph_pool::open(path_Graphs + "20000nodeGraph");
-    auto pool = graph_pool::open("./graph/20000nodeGraph");
-    auto graph = pool->open_graph("20000nodeGraph");
+    //auto pool = graph_pool::open("./graph/20000nodeGraph");
+    //auto graph = pool->open_graph("20000nodeGraph");
 
     //auto pool = graph_pool::open(path_Graphs +"30000nodeGraph");
     //auto graph = pool->open_graph("30000nodeGraph");
@@ -399,6 +306,7 @@ int main(){
 
     auto start_init_label= std::chrono::high_resolution_clock::now();
 
+    init_rel(g);
     //init_labels(g);
     //init_labels_serial(g);
 
@@ -411,20 +319,9 @@ int main(){
 
     auto start_label_prop= std::chrono::high_resolution_clock::now();
 
-    label_prop(g);
+    //label_prop(g);
     //label_prop_serial(g); //--> was bei 16 min für algo
-    //label_prop_omp(g);
-    /*graph->begin_transaction();
-    std::vector<relationship::id_t> vec;
-    graph->nodes([&graph](node& n){
-        size_t count = 0;
-        graph->foreach_from_relationship_of_node(n, "label_prop",[&count](relationship& r){
-            //std::cout << r.id() << std::endl;
-            count++;
-        });
-        std::cout << count << std::endl;
-    });
-    graph->commit_transaction();*/
+    label_prop_omp(g);
 
     auto stop_label_prop = std::chrono::high_resolution_clock::now();
 
@@ -438,9 +335,20 @@ int main(){
  //std::cout << vec.size() << std::endl;
  //std::cout << g.get_node_iterator_begin()->get()->read_property("neighbour_count") << std::endl;
 
-/*
-    graph->begin_transaction();
 
+    graph->begin_transaction();
+/*
+    for(auto it=g.get_rel_iterator_begin(); it != g.get_rel_iterator_end();it++){
+        std::cout << "Knoten " << graph->get_node_description(graph->rship_by_id((*it)->get_id()).from_node_id()).properties.at("name") << " zu " << graph->get_node_description(graph->rship_by_id((*it)->get_id()).to_node_id()).properties.at("name") << std::endl;
+    }
+
+    for(auto it=g.get_node_iterator_begin(); it != g.get_node_iterator_end();it++){
+        std::cout << "Knoten " << 
+        graph->get_node_description((*it)->get_id()).properties.at("name") 
+        << " zu " << 
+        (*it)->read_property("begin_rel") << "   " << (*it)->read_property("end_rel") << std::endl;
+    }
+*/
 
     
     for(auto it=g.get_node_iterator_begin(); it != g.get_node_iterator_end();it++){
@@ -467,5 +375,5 @@ int main(){
         std::cout << graph->get_node_description((*it)->get_from_node()->get_id()).properties.at("name") << "  nach: " << graph->get_node_description((*it)->get_to_node()->get_id()).properties.at("name") << std::endl;
     }*/
 
-    //graph->commit_transaction();
+    graph->commit_transaction();
 }

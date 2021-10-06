@@ -101,6 +101,6 @@ void create_labelprop_testgraph(){
 }
 
 int main(){
-  PageRank_example();
+  //PageRank_example();
   create_labelprop_testgraph();
 }

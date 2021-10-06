@@ -14,6 +14,12 @@ example: $(OBJDIR)/example.o
 $(OBJDIR)/example.o: $(SRCDIR)/example.cpp
 	g++ -g $(CXX_FLAGS) $(CXX_DEFINES) $(INC) -I../library_classes/header  -o $@ -c $^
 
+label_prop_new: $(OBJDIR)/label_prop_new.o
+	g++ -g $(CXX_FLAGS) $^ -o $@ $(LINKER_COMMANDS) -Wl,-rpath,../library_classes/build -L../library_classes/build -lgraph_components -lprimesieve
+
+$(OBJDIR)/label_prop_new.o: $(SRCDIR)/label_prop_new.cpp
+	g++ -g $(CXX_FLAGS) $(CXX_DEFINES) $(INC) -I../library_classes/header  -o $@ -c $^
+
 create_graphs: $(OBJDIR)/create_graphs.o
 	g++ -g $(CXX_FLAGS) $^ -o $@ $(LINKER_COMMANDS) -Wl,-rpath,../library_classes/build -L../library_classes/build -lgraph_components -lprimesieve
 
@@ -24,6 +30,12 @@ PageRank: $(OBJDIR)/pageRank.o
 	g++ -g $(CXX_FLAGS) $^ -o $@ $(LINKER_COMMANDS) -Wl,-rpath,../library_classes/build -L../library_classes/build -lgraph_components -lprimesieve
 
 $(OBJDIR)/pageRank.o: $(SRCDIR)/pageRank.cpp
+	g++ -g $(CXX_FLAGS) $(CXX_DEFINES) $(INC) -I../library_classes/header  -o $@ -c $^
+
+bfs: $(OBJDIR)/bfs.o
+	g++ -g $(CXX_FLAGS) $^ -o $@ $(LINKER_COMMANDS) -Wl,-rpath,../library_classes/build -L../library_classes/build -lgraph_components -lprimesieve
+
+$(OBJDIR)/bfs.o: $(SRCDIR)/bfs.cpp
 	g++ -g $(CXX_FLAGS) $(CXX_DEFINES) $(INC) -I../library_classes/header  -o $@ -c $^
 
 test: $(OBJDIR)/test.o

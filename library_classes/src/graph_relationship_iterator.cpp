@@ -5,6 +5,10 @@ Graph_Rel_Iterator::Graph_Rel_Iterator(std::vector<std::unique_ptr<Relationship>
     end = end_input;
     size_t distance = std::distance(begin, end);
 
+    if(distance < thread_count){
+        thread_count = distance;
+    }
+
     thread_limits = {0};
 
     for(size_t i=0; i<thread_count; i++){

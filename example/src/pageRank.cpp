@@ -263,14 +263,8 @@ int main()
 
     std::string path_Graphs = "../../../big_graphs/graph/";
 
-    //auto pool = graph_pool::open("./graph/Label_Prop_Test");
-    //auto graph = pool->open_graph("Label_Prop_Test");
-
-    //auto pool = graph_pool::open("./graph/PageRank_small_Test");
-   // auto graph = pool->open_graph("PageRank_small_Test");
-
-    //auto pool = graph_pool::open("./graph/PageRank_example_Test");
-    //auto graph = pool->open_graph("PageRank_example_Test");
+    auto pool = graph_pool::open("./graph/PageRank_example_Test");
+    auto graph = pool->open_graph("PageRank_example_Test");
 
     //auto pool = graph_pool::open(path_Graphs+"5000nodeGraph");
     //auto graph = pool->open_graph("5000nodeGraph");
@@ -278,8 +272,8 @@ int main()
     //auto pool = graph_pool::open(path_Graphs+"10000nodeGraph");
     //auto graph = pool->open_graph("10000nodeGraph");
 
-    auto pool = graph_pool::open(path_Graphs + "20000nodeGraph");
-    auto graph = pool->open_graph("20000nodeGraph");
+    //auto pool = graph_pool::open(path_Graphs + "20000nodeGraph");
+    //auto graph = pool->open_graph("20000nodeGraph");
 
     //auto pool = graph_pool::open(path_Graphs+"30000nodeGraph");
     //auto graph = pool->open_graph("30000nodeGraph");
@@ -319,9 +313,9 @@ int main()
 
     auto start_init_label = std::chrono::high_resolution_clock::now();
 
-    //init_ranks(g); // auf Knoten und Kanten ausführen, sodass alle die Eigenschaft haben -> auch ausgehende Kanten zählen und dazuschreiben
+    init_ranks(g); // auf Knoten und Kanten ausführen, sodass alle die Eigenschaft haben -> auch ausgehende Kanten zählen und dazuschreiben
     //init_ranks_serial(g);
-    init_ranks_omp(g);
+    //init_ranks_omp(g);
 
     auto stop_init_label = std::chrono::high_resolution_clock::now();
 
@@ -352,7 +346,7 @@ int main()
 
     cleanup(graph);
 
-    //graph->begin_transaction();
+    graph->begin_transaction();
 
     /*
     for(auto it=g.get_node_iterator_begin(); it != g.get_node_iterator_end();it++){
@@ -369,11 +363,11 @@ int main()
         std::cout << std::endl;
     }
     */
-/*
+
     for (auto it = g.get_node_iterator_begin(); it != g.get_node_iterator_end(); it++)
     {
         std::cout << graph->get_node_description((*it)->get_id()).properties.at("name") << " hat den Rank: " << (*it)->read_property("rank") << std::endl;
-    }*/
+    }
     /*
     graph->relationships_by_label("label_prop", [](relationship& r){
         std::cout << r.from_node_id() << "             " << r.to_node_id() << std::endl;
@@ -395,5 +389,5 @@ int main()
         std::cout << graph->get_node_description((*it)->get_from_node()->get_id()).properties.at("name") << "  nach: " << graph->get_node_description((*it)->get_to_node()->get_id()).properties.at("name") << std::endl;
     }
 */
-   // graph->commit_transaction();
+   graph->commit_transaction();
 }
