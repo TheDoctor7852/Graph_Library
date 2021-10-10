@@ -101,8 +101,38 @@ void test_insert_multiple_nodes_and_rel(){
 
 }
 
+void test_smaller_iterators(){
+    auto pool = graph_pool::open("./graph/PageRank_example_Test");
+    auto graph = pool->open_graph("PageRank_example_Test");
+
+    Graph g(graph);
+
+    graph->begin_transaction();
+
+    graph->nodes([&g](node& n){
+        g.add_node(n.id());
+    });
+
+    graph->commit_transaction();
+
+    Graph_Node_Iterator it(g.get_node_iterator_begin(), g.get_node_iterator_begin()+3);
+
+    auto limits = it.get_thread_limits();
+    auto primes = it.get_prime_numbers();
+
+    for(int i=0; i<limits.size(); i++){
+        std::cout << limits[i] << std::endl; 
+    }
+    std::cout << "<------------------------------------------------------------------->" << std::endl;
+    for(int i=0; i<primes.size(); i++){
+        std::cout << primes[i] << std::endl; 
+    }
+
+}
+
 int main(){
     //test_node_insert_and_index();
     //test_rel_insert_and_index();
-    test_insert_multiple_nodes_and_rel();
+    //test_insert_multiple_nodes_and_rel();
+    test_smaller_iterators();
 }
