@@ -26,14 +26,14 @@ void Relationship::remove_property(std::string key){
     propertys.erase(key);
 }
 
-bool Relationship::change_property(std::string key, std::function<void(boost::any&)> f){
-    std::unique_lock<std::shared_mutex> lock(write);
-        try{
-            f(propertys.at(key));
-            return true;
-        }catch(...){
-            return false;
-        }
+bool Relationship::change_property(std::string key, boost::any value){
+    auto it = propertys.find(key);
+    if(it != propertys.end()){
+        it->second = value;
+        return true;
+    }else{
+        return false;
+    }
 }
 
 const boost::any Relationship::read_property(std::string key){

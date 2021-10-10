@@ -126,8 +126,8 @@ void pageRank(Graph &g)
                                                                         sum = sum + boost::any_cast<double>(neighbour->read_property("rank")) / boost::any_cast<size_t>(neighbour->read_property("neighbour_count"));
                                                                     });
                      double diff_before = boost::any_cast<double>(n->read_property("rank"));
-                     n->change_property("new_rank", [&sum](boost::any &p)
-                                        { p = 0.15 + 0.85 * sum; });
+                     double new_value = 0.15 + 0.85 * sum;
+                     n->change_property("new_rank", new_value);
                      double diff_after = boost::any_cast<double>(n->read_property("new_rank"));
                      if (abs(diff_before - diff_after) > diff_limit)
                      {
@@ -138,8 +138,7 @@ void pageRank(Graph &g)
         for_each(iter_node, [](Node *n)
                  {
                      double d = boost::any_cast<double>(n->read_property("new_rank"));
-                     n->change_property("rank", [&d](boost::any &p)
-                                        { p = d; });
+                     n->change_property("rank", d);
                  });
 
         g.get_graph()->commit_transaction();
@@ -175,8 +174,8 @@ void pageRank_omp(Graph &g)
                                                                         sum = sum + boost::any_cast<double>(neighbour->read_property("rank")) / boost::any_cast<size_t>(neighbour->read_property("neighbour_count"));
                                                                     });
                      double diff_before = boost::any_cast<double>(n->read_property("rank"));
-                     n->change_property("new_rank", [&sum](boost::any &p)
-                                        { p = 0.15 + 0.85 * sum; });
+                     double new_value = 0.15 + 0.85 * sum;
+                     n->change_property("new_rank", new_value);
                      double diff_after = boost::any_cast<double>(n->read_property("new_rank"));
                      if (abs(diff_before - diff_after) > diff_limit)
                      {
@@ -187,8 +186,7 @@ void pageRank_omp(Graph &g)
         for_each_openmp(iter_node, [](Node *n)
                  {
                      double d = boost::any_cast<double>(n->read_property("new_rank"));
-                     n->change_property("rank", [&d](boost::any &p)
-                                        { p = d; });
+                     n->change_property("rank",  d);
                  });
 
         g.get_graph()->commit_transaction();
@@ -225,8 +223,8 @@ void pageRank_serial(Graph &g)
                                                            });
 
             double diff_before = boost::any_cast<double>((*n)->read_property("rank"));
-            (*n)->change_property("new_rank", [&sum](boost::any &p)
-                                  { p = 0.15 + 0.85 * sum; });
+            double new_value = 0.15 + 0.85 * sum;
+            (*n)->change_property("new_rank", new_value);
             double diff_after = boost::any_cast<double>((*n)->read_property("new_rank"));
             if (abs(diff_before - diff_after) > diff_limit)
             {
@@ -236,8 +234,7 @@ void pageRank_serial(Graph &g)
         for (auto n = g.get_node_iterator_begin(); n != g.get_node_iterator_end(); n++)
         {
             double d = boost::any_cast<double>((*n)->read_property("new_rank"));
-            (*n)->change_property("rank", [&d](boost::any &p)
-                                  { p = d; });
+            (*n)->change_property("rank", d);
         }
         g.get_graph()->commit_transaction();
         turns++;
@@ -313,9 +310,9 @@ int main()
 
     auto start_init_label = std::chrono::high_resolution_clock::now();
 
-    init_ranks(g); // auf Knoten und Kanten ausführen, sodass alle die Eigenschaft haben -> auch ausgehende Kanten zählen und dazuschreiben
+    //init_ranks(g); // auf Knoten und Kanten ausführen, sodass alle die Eigenschaft haben -> auch ausgehende Kanten zählen und dazuschreiben
     //init_ranks_serial(g);
-    //init_ranks_omp(g);
+    init_ranks_omp(g);
 
     auto stop_init_label = std::chrono::high_resolution_clock::now();
 
@@ -326,9 +323,9 @@ int main()
 
     auto start_label_prop = std::chrono::high_resolution_clock::now();
 
-    //pageRank(g);
+    pageRank(g);
     //pageRank_serial(g);
-    pageRank_omp(g);
+    //pageRank_omp(g);
 
     auto stop_label_prop = std::chrono::high_resolution_clock::now();
 

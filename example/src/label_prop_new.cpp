@@ -126,17 +126,13 @@ void label_prop(Graph&g){
                 size_t rel_offset = begin_rel+pos;
                 auto neigh = g.get_graph()->rship_by_id((g.get_rel_iterator_begin()+rel_offset)->get()->get_id()).to_node_id();
                 if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(neigh)->read_property("label"))){
-                            n->change_property("label", [&neigh, &g](boost::any& a){
-                                a = g.get_node(neigh)->read_property("label");
-                            });
+                            n->change_property("label", g.get_node(neigh)->read_property("label"));
                             did_change = true;
                         }
             }else if(diff == 1){
                 auto neigh = g.get_graph()->rship_by_id((g.get_rel_iterator_begin()+boost::any_cast<size_t>(n->read_property("begin_rel")))->get()->get_id()).to_node_id();
                 if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(neigh)->read_property("label"))){
-                            n->change_property("label", [&neigh, &g](boost::any& a){
-                                a = g.get_node(neigh)->read_property("label");
-                            });
+                            n->change_property("label", g.get_node(neigh)->read_property("label"));
                             did_change = true;
                         }
             }
@@ -170,17 +166,13 @@ void label_prop_omp(Graph&g){
                 size_t rel_offset = begin_rel+pos;
                 auto neigh = g.get_graph()->rship_by_id((g.get_rel_iterator_begin()+rel_offset)->get()->get_id()).to_node_id();
                 if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(neigh)->read_property("label"))){
-                            n->change_property("label", [&neigh, &g](boost::any& a){
-                                a = g.get_node(neigh)->read_property("label");
-                            });
+                            n->change_property("label", g.get_node(neigh)->read_property("label"));
                             did_change = true;
                         }
             }else if(diff == 1){
                 auto neigh = g.get_graph()->rship_by_id((g.get_rel_iterator_begin()+boost::any_cast<size_t>(n->read_property("begin_rel")))->get()->get_id()).to_node_id();
                 if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(neigh)->read_property("label"))){
-                            n->change_property("label", [&neigh, &g](boost::any& a){
-                                a = g.get_node(neigh)->read_property("label");
-                            });
+                            n->change_property("label", g.get_node(neigh)->read_property("label"));
                             did_change = true;
                         }
             }
@@ -230,17 +222,13 @@ void label_prop_serial(Graph& g){
                 size_t rel_offset = begin_rel+pos;
                 auto neigh = g.get_graph()->rship_by_id((g.get_rel_iterator_begin()+rel_offset)->get()->get_id()).to_node_id();
                 if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(neigh)->read_property("label"))){
-                            n->change_property("label", [&neigh, &g](boost::any& a){
-                                a = g.get_node(neigh)->read_property("label");
-                            });
+                            n->change_property("label", g.get_node(neigh)->read_property("label"));
                             did_change = true;
                         }
             }else if(diff == 1){
                 auto neigh = g.get_graph()->rship_by_id((g.get_rel_iterator_begin()+boost::any_cast<size_t>(n->read_property("begin_rel")))->get()->get_id()).to_node_id();
                 if(boost::any_cast<node::id_t>(n->read_property("label")) != boost::any_cast<node::id_t>(g.get_node(neigh)->read_property("label"))){
-                            n->change_property("label", [&neigh, &g](boost::any& a){
-                                a = g.get_node(neigh)->read_property("label");
-                            });
+                            n->change_property("label", g.get_node(neigh)->read_property("label"));
                             did_change = true;
                         }
             }

@@ -130,9 +130,49 @@ void test_smaller_iterators(){
 
 }
 
+void test_change_prop(){
+    auto pool = graph_pool::open("./graph/PageRank_example_Test");
+    auto graph = pool->open_graph("PageRank_example_Test");
+
+    Graph g(graph);
+
+    graph->begin_transaction();
+
+    graph->nodes([&g](node& n){
+        auto node = g.add_node(n.id());
+        node->add_property("number", n.id());
+    });
+
+    graph->commit_transaction();
+
+    Graph_Node_Iterator it(g.get_node_iterator_begin(), g.get_node_iterator_end());
+
+    for(auto i = it.get_begin(); i!= it.get_end(); i++){
+        std::cout << (*i)->get_id() << " hat number: " << (*i)->read_property("number") << std::endl;
+    }
+
+    std::cout << "-------------------------------------------------------" << std::endl;
+
+    for_each(it, [](Node* n){
+        size_t new_v = n->get_id() +1;
+        n->change_property("number", new_v);
+    });
+
+    for(auto i = it.get_begin(); i!= it.get_end(); i++){
+        std::cout << (*i)->get_id() << " hat number: " << (*i)->read_property("number") << std::endl;
+    }
+
+    std::cout << "-------------------------------------------------------" << std::endl;
+
+    for(auto i = it.get_begin(); i!= it.get_end(); i++){
+        std::cout << (*i)->get_id() << " hat number: " << (*i)->read_property("number") << std::endl;
+    }
+}
+
 int main(){
     //test_node_insert_and_index();
     //test_rel_insert_and_index();
     //test_insert_multiple_nodes_and_rel();
-    test_smaller_iterators();
+    //test_smaller_iterators();
+    test_change_prop();
 }

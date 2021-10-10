@@ -26,14 +26,14 @@ const boost::any Node::read_property(std::string key){
     return propertys.at(key);
 }
 
-bool Node::change_property(std::string key, std::function<void(boost::any&)> f){ //besser prüft mit find ob key vorhanden
-    std::unique_lock<std::shared_mutex> lock(write_property);
-        try{
-            f(propertys.at(key));
-            return true;
-        }catch(...){
-            return false;
-        }
+bool Node::change_property(std::string key, boost::any value){ //besser prüft mit find ob key vorhanden
+    auto it = propertys.find(key);
+    if(it != propertys.end()){
+        it->second = value;
+        return true;
+    }else{
+        return false;
+    }
 }
 
 const node::id_t& Node::get_id(){

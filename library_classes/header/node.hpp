@@ -43,7 +43,7 @@ class Node{
         /*
           changes the property identified by the given string. A function is required if for example an vector was stored and needs to be modified without overwriting. 
         */
-        bool change_property(std::string key, std::function<void(boost::any&)> f);
+        bool change_property(std::string key, boost::any value);
 
         /*
           read the property identified by the given string. If no value identified by the given string exists an exception will be thrown.
