@@ -86,3 +86,11 @@ Relationship* Graph::get_rel(relationship::id_t input){
 graph_db_ptr& Graph::get_graph(){
     return *graph;
 }
+
+std::vector<std::unique_ptr<Node>>& Graph::get_node_vec(){
+    return node_vec;
+}
+
+std::vector<std::unique_ptr<Relationship>>& Graph::get_rel_vec(){
+    return rel_vec;
+}

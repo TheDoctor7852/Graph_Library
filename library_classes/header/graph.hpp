@@ -79,6 +79,10 @@ class Graph{
         Relationship* get_rel(relationship::id_t input);
 
         graph_db_ptr& get_graph();
+
+        std::vector<std::unique_ptr<Node>>& get_node_vec();
+
+        std::vector<std::unique_ptr<Relationship>>& get_rel_vec();
 };
 
 #endif
