@@ -3,6 +3,7 @@
 #include "graph_relationship_iterator.hpp"
 
 #include <limits>
+#include <primesieve.hpp>
 
 void test_node_insert_and_index(){
     auto pool = graph_pool::open("./graph/PageRank_example_Test");
@@ -169,10 +170,18 @@ void test_change_prop(){
     }
 }
 
+void max_prime_numbers(){
+    auto p = primesieve::iterator(primesieve::get_max_stop());
+    for(int i=0; i<10; i++){
+        std::cout << p.prev_prime() << std::endl;
+    }
+}
+
 int main(){
     //test_node_insert_and_index();
     //test_rel_insert_and_index();
     //test_insert_multiple_nodes_and_rel();
     //test_smaller_iterators();
-    test_change_prop();
+    //test_change_prop();
+    max_prime_numbers();
 }
